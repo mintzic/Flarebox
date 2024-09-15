@@ -1,2 +1,3 @@
-# Mystic-r34
-a cloud storage service that allows users to store and access data over the internet
+# Minio-express-api
+
+This is a simple express api that uses minio as a storage backend. It allows you to upload and download files from a minio server.
