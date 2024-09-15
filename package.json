@@ -1,0 +1,22 @@
+{
+  "name": "minio-express-api",
+  "version": "1.0.0",
+  "description": "This is a simple express api that uses minio as a storage backend. It allows you to upload and download files from a minio server.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.0",
+    "minio": "^8.0.1",
+    "minio-express-api": "file:",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
+}
