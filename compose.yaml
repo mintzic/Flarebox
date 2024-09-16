@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   minio:
     image: minio/minio
@@ -37,6 +35,16 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY_FILE: /root/.api_credentials
     command: sh -c "sh /usr/src/app/setup_minio.sh && npm start"
+    user: root
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /usr/src/app
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./package.json
 
 volumes:
   minio_storage:
