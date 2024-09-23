@@ -1,6 +1,6 @@
 const minioService = require("../services/minioService");
 
-exports.uploadFile = async (req, res, next) => {
+module.exports.uploadFile = async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).send("No files were uploaded.");
@@ -17,7 +17,7 @@ exports.uploadFile = async (req, res, next) => {
   }
 };
 
-exports.downloadFile = async (req, res, next) => {
+module.exports.downloadFile = async (req, res, next) => {
   try {
     const fileStream = await minioService.getFile(req.params.bucket, req.params.filename);
     fileStream.pipe(res);
@@ -26,7 +26,7 @@ exports.downloadFile = async (req, res, next) => {
   }
 };
 
-exports.listFiles = async (req, res, next) => {
+module.exports.listFiles = async (req, res, next) => {
   try {
     const files = await minioService.listFiles(req.params.bucket);
     res.status(200).json(files);
@@ -35,7 +35,7 @@ exports.listFiles = async (req, res, next) => {
   }
 };
 
-exports.deleteFile = async (req, res, next) => {
+module.exports.deleteFile = async (req, res, next) => {
   try {
     await minioService.deleteFile(req.params.bucket, req.params.filename);
     res.status(200).json({ message: "File deleted successfully" });

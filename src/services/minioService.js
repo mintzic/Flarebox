@@ -2,17 +2,21 @@ const { exec } = require("child_process");
 const Minio = require("minio");
 const minioConfig = require("../../config/minioConfig");
 
-const minioClient = new Minio.Client(minioConfig);
+module.exports.uploadFile = (accessKey, secretKey, bucketName, filename, buffer, mimetype) => {
+  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
 
-exports.uploadFile = (bucketName, filename, buffer, mimetype) => {
   return minioClient.putObject(bucketName, filename, buffer, buffer.length, { "Content-Type": mimetype });
 };
 
-exports.getFile = (bucketName, filename) => {
+module.exports.getFile = (accessKey, secretKey, bucketName, filename) => {
+  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
+
   return minioClient.getObject(bucketName, filename);
 };
 
-exports.listFiles = (bucketName) => {
+module.exports.listFiles = (bucketName) => {
+  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
+
   return new Promise((resolve, reject) => {
     const files = [];
     const stream = minioClient.listObjects(bucketName, "", true);
@@ -22,48 +26,32 @@ exports.listFiles = (bucketName) => {
   });
 };
 
-exports.createBucket = (bucketName, region) => {
+module.exports.createBucket = (bucketName, region) => {
+  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
+
   return minioClient.makeBucket(bucketName, region);
 };
 
-exports.deleteFile = (bucketName, filename) => {
-  return minioClient.removeObject(minioConfig.bucketName, filename);
+module.exports.deleteFile = (bucketName, filename) => {
+  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
+
+  return minioClient.removeObject(bucketName, filename);
 };
 
-exports.deleteBucket = (bucketName) => {
+module.exports.deleteBucket = (bucketName) => {
+  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
+
   return minioClient.removeBucket(bucketName);
 };
 
-exports.createUser = async (username, password) => {
-  exec(`mc admin user add ${minioConfig.alias} ${username} ${password}`, (error, stdout, stderr) => {
-    if (error) {
-      throw new Error(stderr);
-    }
-    return stdout;
-  });
-};
-
-exports.deleteUser = async (username) => {
-  exec(`mc admin user remove ${minioConfig.alias} ${username}`, (error, stdout, stderr) => {
-    if (error) {
-      throw new Error(stderr);
-    }
-    return stdout;
-  });
-};
-
-exports.listUsers = async () => {
-  exec(`mc admin user list ${minioConfig.alias}`, (error, stdout, stderr) => {
-    if (error) {
-      throw new Error(stderr);
-    }
-    return stdout;
-  });
-};
-
-exports.setUserPolicy = async (username, bucketName) => {
+module.exports.createUser = async (username, password) => {
   exec(
-    `mc admin policy set ${minioConfig.alias} readwrite user=${username} bucket=${bucketName}`,
+    `
+    mc mb ${minioConfig.alias}/${username} &&
+    mc admin user add ${minioConfig.alias} ${username} ${password} && 
+    mc admin policy set ${minioConfig.alias} readwrite user=${username} bucket=${username} &&
+    mc version enable ${minioConfig.alias}/${username}
+    `,
     (error, stdout, stderr) => {
       if (error) {
         throw new Error(stderr);
@@ -73,11 +61,38 @@ exports.setUserPolicy = async (username, bucketName) => {
   );
 };
 
-exports.enableVersioning = (bucketName) => {
-  exec(`mc version enable ${minioConfig.alias}/${bucketName}`, (error, stdout, stderr) => {
+module.exports.deleteUser = async (username) => {
+  exec(
+    `
+    mc rb ${minioConfig.alias}/${username} &&
+    mc admin user remove ${minioConfig.alias} ${username}
+    `,
+    (error, stdout, stderr) => {
+      if (error) {
+        throw new Error(stderr);
+      }
+      return stdout;
+    }
+  );
+};
+
+module.exports.listUsers = async () => {
+  exec(`mc admin user list ${minioConfig.alias}`, (error, stdout, stderr) => {
     if (error) {
       throw new Error(stderr);
     }
     return stdout;
   });
+};
+
+module.exports.setUserPolicy = async (username, bucketName) => {
+  exec(
+    `mc admin policy set ${minioConfig.alias} readwrite user=${username} bucket=${bucketName}`,
+    (error, stdout, stderr) => {
+      if (error) {
+        throw new Error(stderr);
+      }
+      return stdout;
+    }
+  );
 };

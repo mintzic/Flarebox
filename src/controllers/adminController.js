@@ -1,6 +1,6 @@
 const minioService = require("../services/minioService");
 
-exports.createBucket = async (req, res, next) => {
+module.exports.createBucket = async (req, res, next) => {
   try {
     const { bucketName, region } = req.body;
     await minioService.createBucket(bucketName, region);
@@ -10,7 +10,7 @@ exports.createBucket = async (req, res, next) => {
   }
 };
 
-exports.deleteBucket = async (req, res, next) => {
+module.exports.deleteBucket = async (req, res, next) => {
   try {
     const { bucketName } = req.params;
     await minioService.deleteBucket(bucketName);
@@ -20,7 +20,7 @@ exports.deleteBucket = async (req, res, next) => {
   }
 };
 
-exports.createUser = async (req, res, next) => {
+module.exports.createUser = async (req, res, next) => {
   try {
     const { username, password } = req.body;
 
@@ -38,7 +38,7 @@ exports.createUser = async (req, res, next) => {
   }
 };
 
-exports.deleteUser = async (req, res, next) => {
+module.exports.deleteUser = async (req, res, next) => {
   try {
     const { username } = req.params;
 
@@ -54,7 +54,7 @@ exports.deleteUser = async (req, res, next) => {
   }
 };
 
-exports.listUsers = async (req, res, next) => {
+module.exports.listUsers = async (req, res, next) => {
   try {
     const users = await minioService.listUsers();
     res.status(200).json(users);
@@ -63,7 +63,7 @@ exports.listUsers = async (req, res, next) => {
   }
 };
 
-exports.setUserPolicy = async (req, res, next) => {
+module.exports.setUserPolicy = async (req, res, next) => {
   try {
     const { username, bucketName } = req.body;
 
