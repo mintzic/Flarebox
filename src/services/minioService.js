@@ -1,98 +1,107 @@
 const { exec } = require("child_process");
+const util = require("util");
+const execPromise = util.promisify(exec);
 const Minio = require("minio");
 const minioConfig = require("../../config/minioConfig");
 
-module.exports.uploadFile = (accessKey, secretKey, bucketName, filename, buffer, mimetype) => {
-  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
+// Create a new Minio client with the config options
+const minioClient = new Minio.Client(minioConfig);
 
-  return minioClient.putObject(bucketName, filename, buffer, buffer.length, { "Content-Type": mimetype });
+// Helper function to execute mc commands
+async function executeMcCommand(command) {
+  try {
+    const { stdout, stderr } = await execPromise(command);
+    if (stderr) {
+      console.error("Command stderr:", stderr);
+    }
+    return stdout.trim();
+  } catch (error) {
+    console.error("Error executing command:", error);
+    throw error;
+  }
+}
+
+module.exports.uploadFile = async (bucketName, filename, buffer, mimetype) => {
+  if (await minioClient.bucketExists(bucketName)) {
+    return minioClient.putObject(bucketName, filename, buffer, buffer.length, { "Content-Type": mimetype });
+  } else {
+    throw new Error("Unauthorized access");
+  }
 };
 
-module.exports.getFile = (accessKey, secretKey, bucketName, filename) => {
-  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
-
-  return minioClient.getObject(bucketName, filename);
+module.exports.getFile = async (bucketName, filename) => {
+  if (await minioClient.bucketExists(bucketName)) {
+    return minioClient.getObject(bucketName, filename);
+  } else {
+    throw new Error("Unauthorized access");
+  }
 };
 
-module.exports.listFiles = (bucketName) => {
-  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
-
-  return new Promise((resolve, reject) => {
-    const files = [];
-    const stream = minioClient.listObjects(bucketName, "", true);
-    stream.on("data", (obj) => files.push(obj.name));
-    stream.on("error", reject);
-    stream.on("end", () => resolve(files));
-  });
+module.exports.listFiles = async (bucketName) => {
+  if (await minioClient.bucketExists(bucketName)) {
+    return new Promise((resolve, reject) => {
+      const files = [];
+      const stream = minioClient.listObjects(bucketName, "", true);
+      stream.on("data", (obj) => files.push(obj.name));
+      stream.on("error", reject);
+      stream.on("end", () => resolve(files));
+    });
+  } else {
+    throw new Error("Unauthorized access");
+  }
 };
 
-module.exports.createBucket = (bucketName, region) => {
-  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
-
-  return minioClient.makeBucket(bucketName, region);
-};
-
-module.exports.deleteFile = (bucketName, filename) => {
-  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
-
-  return minioClient.removeObject(bucketName, filename);
-};
-
-module.exports.deleteBucket = (bucketName) => {
-  const minioClient = new Minio.Client(...minioConfig, accessKey, secretKey);
-
-  return minioClient.removeBucket(bucketName);
+module.exports.deleteFile = async (bucketName, filename) => {
+  if (await minioClient.bucketExists(bucketName)) {
+    return minioClient.removeObject(bucketName, filename);
+  } else {
+    throw new Error("Unauthorized access");
+  }
 };
 
 module.exports.createUser = async (username, password) => {
-  exec(
-    `
-    mc mb ${minioConfig.alias}/${username} &&
-    mc admin user add ${minioConfig.alias} ${username} ${password} && 
-    mc admin policy set ${minioConfig.alias} readwrite user=${username} bucket=${username} &&
-    mc version enable ${minioConfig.alias}/${username}
-    `,
-    (error, stdout, stderr) => {
-      if (error) {
-        throw new Error(stderr);
-      }
-      return stdout;
-    }
-  );
+  if (await minioClient.bucketExists(username)) {
+    throw new Error("User already exists");
+  } else {
+    await minioClient.makeBucket(username, "us-east-1");
+  }
+
+  const commands = [
+    `mc admin user add ${minioConfig.alias} ${username} ${password}`,
+    `mc admin policy attach ${minioConfig.alias} user-bucket-policy --user ${username}`,
+    `mc version enable ${minioConfig.alias}/${username}`,
+  ];
+
+  const result = [];
+
+  for (const command of commands) {
+    const stdout = await executeMcCommand(command);
+    result.push(stdout);
+  }
+
+  return result;
 };
 
 module.exports.deleteUser = async (username) => {
-  exec(
-    `
-    mc rb ${minioConfig.alias}/${username} &&
-    mc admin user remove ${minioConfig.alias} ${username}
-    `,
-    (error, stdout, stderr) => {
-      if (error) {
-        throw new Error(stderr);
-      }
-      return stdout;
-    }
-  );
+  if (await minioClient.bucketExists(username)) {
+    await minioClient.removeBucket(username);
+  } else {
+    throw new Error("User does not exist");
+  }
+
+  const commands = [`mc admin user rm ${minioConfig.alias} ${username}`];
+
+  const result = [];
+
+  for (const command of commands) {
+    const stdout = await executeMcCommand(command);
+    result.push(stdout);
+  }
+
+  return result;
 };
 
 module.exports.listUsers = async () => {
-  exec(`mc admin user list ${minioConfig.alias}`, (error, stdout, stderr) => {
-    if (error) {
-      throw new Error(stderr);
-    }
-    return stdout;
-  });
-};
-
-module.exports.setUserPolicy = async (username, bucketName) => {
-  exec(
-    `mc admin policy set ${minioConfig.alias} readwrite user=${username} bucket=${bucketName}`,
-    (error, stdout, stderr) => {
-      if (error) {
-        throw new Error(stderr);
-      }
-      return stdout;
-    }
-  );
+  const command = `mc admin user list ${minioConfig.alias}`;
+  return executeMcCommand(command);
 };

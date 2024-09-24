@@ -8,11 +8,8 @@ const app = express();
 
 app.use(express.json());
 
-app.use(authMiddleware.checkAuth);
 app.use("/", fileRoutes);
 app.use("/admin", adminRoutes);
-
-app.use(errorHandler);
 
 const PORT = process.env.PORT;
 

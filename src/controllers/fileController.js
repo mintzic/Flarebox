@@ -6,40 +6,40 @@ module.exports.uploadFile = async (req, res, next) => {
       return res.status(400).send("No files were uploaded.");
     }
     const result = await minioService.uploadFile(
-      req.params.bucket,
+      res.locals.username,
       req.file.originalname,
       req.file.buffer,
       req.file.mimetype
     );
     res.status(200).json({ message: "File uploaded successfully", etag: result.etag });
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 module.exports.downloadFile = async (req, res, next) => {
   try {
-    const fileStream = await minioService.getFile(req.params.bucket, req.params.filename);
+    const fileStream = await minioService.getFile(res.locals.username, req.params.filename);
     fileStream.pipe(res);
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 module.exports.listFiles = async (req, res, next) => {
   try {
-    const files = await minioService.listFiles(req.params.bucket);
+    const files = await minioService.listFiles(res.locals.username);
     res.status(200).json(files);
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 module.exports.deleteFile = async (req, res, next) => {
   try {
-    await minioService.deleteFile(req.params.bucket, req.params.filename);
+    await minioService.deleteFile(res.locals.username, req.params.filename);
     res.status(200).json({ message: "File deleted successfully" });
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: error.message });
   }
 };

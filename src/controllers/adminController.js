@@ -1,25 +1,5 @@
 const minioService = require("../services/minioService");
 
-module.exports.createBucket = async (req, res, next) => {
-  try {
-    const { bucketName, region } = req.body;
-    await minioService.createBucket(bucketName, region);
-    res.status(201).json({ message: "Bucket created successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
-
-module.exports.deleteBucket = async (req, res, next) => {
-  try {
-    const { bucketName } = req.params;
-    await minioService.deleteBucket(bucketName);
-    res.json({ message: "Bucket deleted successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
-
 module.exports.createUser = async (req, res, next) => {
   try {
     const { username, password } = req.body;
@@ -34,7 +14,7 @@ module.exports.createUser = async (req, res, next) => {
 
     res.status(201).json({ message: "User created successfully", result });
   } catch (error) {
-    next(error);
+    res.status(500).json(error?.message);
   }
 };
 
@@ -50,7 +30,7 @@ module.exports.deleteUser = async (req, res, next) => {
 
     res.status(200).json({ message: "User deleted successfully", result });
   } catch (error) {
-    next(error);
+    res.status(500).json(error?.message);
   }
 };
 
@@ -59,21 +39,6 @@ module.exports.listUsers = async (req, res, next) => {
     const users = await minioService.listUsers();
     res.status(200).json(users);
   } catch (error) {
-    next(error);
-  }
-};
-
-module.exports.setUserPolicy = async (req, res, next) => {
-  try {
-    const { username, bucketName } = req.body;
-
-    if (!username || !bucketName) {
-      return res.status(400).send("Username and bucket name are required");
-    }
-
-    const result = await minioService.setUserPolicy(username, bucketName);
-    res.status(200).json({ message: "User policy set successfully", result });
-  } catch (error) {
-    next(error);
+    res.status(500).json(error?.message);
   }
 };
