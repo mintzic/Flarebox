@@ -1,4 +1,3 @@
-
 <h1 align="center" style="font-weight: bold;">FlareBox</h1>
 
 <p align="center">
@@ -8,10 +7,7 @@
 <a href="#contribute">Contribute</a> 
 </p>
 
-
 <p align="center">FlareBox is a cloud-ready object storage solution built using MinIO and an Express API. It provides a scalable and efficient platform for managing file uploads, downloads, and storage operations in the cloud.</p>
-
-
 
 <h2 id="tech">💻 Technologies</h2>
 
@@ -38,59 +34,58 @@ How to clone your project
 git clone https://github.com/mintzic/Flarebox.git
 ```
 
-<h3>Config .env variables</h2>
-
-Use the `.env.example` as reference to create your configuration file `.env` with your AWS Credentials
-
-```yaml
-NODE_AWS_REGION=us-east-1
-NODE_AWS_KEY_ID={YOUR_AWS_KEY_ID}
-NODE_AWS_SECRET={YOUR_AWS_SECRET}
-```
-
 <h3>Starting</h3>
 
 How to start your project
 
 ```bash
-cd project-name
-npm some-command-to-run
+cd Flarebox
+docker-compose up -d
 ```
 
 <h2 id="routes">📍 API Endpoints</h2>
 
 Here you can list the main routes of your API, and what are their expected request bodies.
 ​
-| route               | description                                          
+| route | description  
 |----------------------|-----------------------------------------------------
-| <kbd>GET /authenticate</kbd>     | retrieves user info see [response details](#get-auth-detail)
-| <kbd>POST /authenticate</kbd>     | authenticate user into the api see [request details](#post-auth-detail)
+| <kbd>POST /admin</kbd> | create user and data bucket [response details](#post-auth-detail)
+| <kbd>DELETE /admin/:username</kbd> | delete user and data bucket
+| <kbd>GET /admin</kbd> | list all users
+| <kbd>POST /upl</kbd> | upload file to user's data bucket [request details](#post-file-detail)
+| <kbd>GET /</kbd> | list all files in user's data bucket
+| <kbd>GET /dwn/:file</kbd> | download file from user's data bucket
+| <kbd>DELETE /:file</kbd> | delete file from user's data bucket
 
-<h3 id="get-auth-detail">GET /authenticate</h3>
+<h3>Basic Auth for admin routes</h3>
 
-**RESPONSE**
 ```json
 {
-  "name": "Fernanda Kipper",
-  "age": 20,
-  "email": "her-email@gmail.com"
+  "Username": "minioadmin",
+  "Password": "minioadmin"
 }
 ```
 
-<h3 id="post-auth-detail">POST /authenticate</h3>
+> Note: for file routes, use the created user's credentials
+
+<h3 id="post-auth-detail">POST /admin</h3>
 
 **REQUEST**
+
 ```json
 {
   "username": "fernandakipper",
-  "password": "4444444"
+  "password": "44444444"
 }
 ```
 
-**RESPONSE**
+<h3 id="post-file-detail">POST /upl</h3>
+
+**REQUEST**
+
 ```json
 {
-  "token": "OwoMRHsaQwyAgVoc3OXmL1JhMVUYXGGBbCTK0GBgiYitwQwjf0gVoBmkbuyy0pSi"
+  "file": "file.jpg"
 }
 ```
 
